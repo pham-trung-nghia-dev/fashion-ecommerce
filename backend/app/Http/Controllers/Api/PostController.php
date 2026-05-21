@@ -34,6 +34,15 @@ class PostController extends Controller
 
     private function formatPost(Post $p): array
     {
+        $imageUrl = '';
+        if ($p->thumbnail) {
+            if (str_starts_with($p->thumbnail, 'http') || str_starts_with($p->thumbnail, 'data:')) {
+                $imageUrl = $p->thumbnail;
+            } else {
+                $imageUrl = asset('storage/'.$p->thumbnail);
+            }
+        }
+
         return [
             'id' => $p->id,
             'title' => $p->title,
@@ -41,7 +50,7 @@ class PostController extends Controller
             // Trả về đúng HTML mô tả / nội dung như đã nhập
             'description' => $p->excerpt ?? ($p->content ?? ''),
             'content' => $p->content ?? '',
-            'image' => $p->thumbnail ? asset('storage/'.$p->thumbnail) : '',
+            'image' => $imageUrl,
         ];
     }
 }

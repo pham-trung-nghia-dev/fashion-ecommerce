@@ -54,6 +54,15 @@ class ProductController extends Controller
 
     private function formatProduct(Product $p): array
     {
+        $imageUrl = '';
+        if ($p->image) {
+            if (str_starts_with($p->image, 'http') || str_starts_with($p->image, 'data:')) {
+                $imageUrl = $p->image;
+            } else {
+                $imageUrl = asset('storage/'.$p->image);
+            }
+        }
+
         return [
             'id' => $p->id,
             'name' => $p->name,
@@ -61,7 +70,7 @@ class ProductController extends Controller
             'price' => (string) $p->price,
             'oldPrice' => $p->old_price ? (string) $p->old_price : null,
             'discount' => $p->discount,
-            'image' => $p->image ? asset('storage/'.$p->image) : '',
+            'image' => $imageUrl,
             'isNew' => (bool) $p->is_new,
         ];
     }
