@@ -174,4 +174,86 @@ export async function apiLogout(token: string) {
   return { ok: res.ok, status: res.status }
 }
 
+// Order types & APIs
+export type ApiOrderItem = {
+  id: number
+  productId: number
+  productName: string
+  price: string
+  quantity: number
+  image: string
+}
+
+export type ApiOrder = {
+  id: number
+  orderCode: number
+  customerName: string
+  customerPhone: string
+  customerEmail: string
+  shippingAddress: string
+  city: string
+  district: string
+  notes: string
+  paymentMethod: 'cod' | 'payos'
+  paymentStatus: 'pending' | 'paid' | 'failed' | 'cancelled'
+  shippingStatus: 'pending' | 'shipping' | 'delivered' | 'cancelled'
+  subtotal: string
+  discountAmount: string
+  shippingFee: string
+  total: string
+  payosPaymentLinkId?: string
+  createdAt: string
+  items: ApiOrderItem[]
+}
+
+export async function apiCreateOrder(
+  orderData: {
+    customer_name: string
+    customer_phone: string
+    customer_email: string
+    shipping_address: string
+    city: string
+    district: string
+    notes?: string
+    payment_method: 'cod' | 'payos'
+    items: { product_id: number; quantity: number }[]
+    discount_amount?: number
+  },
+  token: string
+) {
+  const url = getApiUrl("/orders")
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Accept": "application/json",
+      "Authorization": `Bearer ${token}`
+    },
+    body: JSON.stringify(orderData)
+  })
+  return { ok: res.ok, status: res.status, data: await res.json() }
+}
+
+export async function apiGetOrders(token: string) {
+  const url = getApiUrl("/orders")
+  const res = await fetch(url, {
+    headers: {
+      "Accept": "application/json",
+      "Authorization": `Bearer ${token}`
+    }
+  })
+  return { ok: res.ok, status: res.status, data: await res.json() }
+}
+
+export async function apiGetOrder(id: number, token: string) {
+  const url = getApiUrl(`/orders/${id}`)
+  const res = await fetch(url, {
+    headers: {
+      "Accept": "application/json",
+      "Authorization": `Bearer ${token}`
+    }
+  })
+  return { ok: res.ok, status: res.status, data: await res.json() }
+}
+
 export { getApiUrl }

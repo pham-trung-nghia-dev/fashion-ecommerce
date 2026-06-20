@@ -71,12 +71,19 @@ const Header = () => {
                         <p className="text-xs font-semibold text-slate-800 truncate">{user.name}</p>
                         <p className="text-[10px] text-slate-500 truncate">{user.email}</p>
                       </div>
+                      <Link
+                        href="/orders"
+                        onClick={() => setIsUserMenuOpen(false)}
+                        className="block rounded-lg px-3 py-2 text-xs font-semibold uppercase tracking-wider text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer"
+                      >
+                        Đơn hàng của tôi
+                      </Link>
                       <button
                         onClick={async () => {
                           setIsUserMenuOpen(false);
                           await logout();
                         }}
-                        className="w-full text-left rounded-lg px-3 py-2 text-xs font-semibold uppercase tracking-wider text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
+                        className="w-full text-left rounded-lg px-3 py-2 text-xs font-semibold uppercase tracking-wider text-red-600 hover:bg-red-50 transition-colors cursor-pointer border-t border-slate-100 mt-1 pt-2"
                       >
                         Đăng xuất
                       </button>

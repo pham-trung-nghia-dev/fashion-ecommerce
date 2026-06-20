@@ -9,10 +9,11 @@ import Image from 'next/image';
 import { ArrowLeft, CheckCircle, CreditCard, Landmark, Truck, ShoppingBag } from 'lucide-react';
 import { formatPriceVND } from '@/src/utils/format';
 import toast from 'react-hot-toast';
+import { apiCreateOrder } from '@/src/lib/api';
 
 function CheckoutContent() {
   const { cart, clearCart } = useCart();
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -60,27 +61,62 @@ function CheckoutContent() {
       return;
     }
 
+    if (!token) {
+      toast.error('Vui lòng đăng nhập để thanh toán.');
+      router.push('/login');
+      return;
+    }
+
     setIsOrdering(true);
 
-    // Mock API call delay
-    await new Promise((resolve) => setTimeout(resolve, 1500));
+    const items = cart.map(item => ({
+      product_id: item.id,
+      quantity: item.quantity
+    }));
 
-    const orderId = `ORD-${Math.floor(100000 + Math.random() * 900000)}`;
-    setPlacedOrderInfo({
-      orderId,
-      name,
-      phone,
-      email,
-      address: `${address}, ${district}, ${city}`,
-      paymentMethod,
-      total,
-      items: [...cart],
-    });
+    try {
+      const res = await apiCreateOrder({
+        customer_name: name,
+        customer_phone: phone,
+        customer_email: email,
+        shipping_address: address,
+        city,
+        district,
+        notes: notes || undefined,
+        payment_method: paymentMethod === 'bank' ? 'payos' : 'cod',
+        items,
+        discount_amount: discountAmount,
+      }, token);
 
-    setIsOrdering(false);
-    setOrderSuccess(true);
-    clearCart();
-    toast.success('Đặt hàng thành công!');
+      if (res.ok) {
+        clearCart();
+        if (res.data.checkoutUrl) {
+          // Redirect to PayOS payment screen
+          window.location.href = res.data.checkoutUrl;
+        } else {
+          // COD payment success
+          setPlacedOrderInfo({
+            orderId: res.data.order.orderCode,
+            name: res.data.order.customerName,
+            phone: res.data.order.customerPhone,
+            email: res.data.order.customerEmail,
+            address: `${res.data.order.shippingAddress}, ${res.data.order.district}, ${res.data.order.city}`,
+            paymentMethod: res.data.order.paymentMethod,
+            total: Number(res.data.order.total),
+            items: [...cart],
+          });
+          setOrderSuccess(true);
+          toast.success('Đặt hàng thành công!');
+        }
+      } else {
+        toast.error(res.data.message || 'Đặt hàng thất bại. Vui lòng thử lại.');
+      }
+    } catch (err: any) {
+      console.error(err);
+      toast.error('Đã xảy ra lỗi khi tạo đơn hàng.');
+    } finally {
+      setIsOrdering(false);
+    }
   };
 
   if (orderSuccess && placedOrderInfo) {
