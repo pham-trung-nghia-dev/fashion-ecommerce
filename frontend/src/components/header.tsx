@@ -6,9 +6,14 @@ import { Search, ShoppingCart, UserRound } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useContext } from "react"
 import { CartContext } from "../context/cartContext"
+import { useAuth } from "../context/authContext"
+import { useState } from "react"
 
 const Header = () => {
   const { cart, setIsOpen } = useContext(CartContext) || { cart: [], setIsOpen: () => {} }
+  const { user, logout, isLoading } = useAuth()
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
+
   const totalQuantity = cart.reduce(
     (acc: number, item: { quantity?: number }) => acc + (item.quantity || 0),
     0
@@ -47,10 +52,45 @@ const Header = () => {
           </div>
 
           {/* Icon user + cart bên phải, ẩn search icon vì đã có trong ô input */}
-          <div className="hidden items-center gap-2 md:flex">
-            <Button variant="ghost" size="icon" className="rounded-full">
-              <UserRound className="h-5 w-5" />
-            </Button>
+          <div className="hidden items-center gap-4 md:flex">
+            <div className="relative">
+              {isLoading ? (
+                <div className="h-5 w-5 animate-spin rounded-full border-2 border-slate-300 border-t-slate-800" />
+              ) : user ? (
+                <>
+                  <button
+                    onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                    className="flex h-10 items-center gap-2 rounded-full border border-slate-200 px-3 py-1.5 hover:bg-slate-50 transition-colors text-xs font-semibold uppercase tracking-wider text-slate-800 cursor-pointer"
+                  >
+                    <UserRound className="h-4 w-4 text-slate-600" />
+                    <span className="max-w-[100px] truncate">{user.name}</span>
+                  </button>
+                  {isUserMenuOpen && (
+                    <div className="absolute right-0 mt-2 w-48 rounded-xl border border-slate-100 bg-white p-2 shadow-lg ring-1 ring-black/5 z-50">
+                      <div className="px-3 py-2 border-b border-slate-100 mb-1">
+                        <p className="text-xs font-semibold text-slate-800 truncate">{user.name}</p>
+                        <p className="text-[10px] text-slate-500 truncate">{user.email}</p>
+                      </div>
+                      <button
+                        onClick={async () => {
+                          setIsUserMenuOpen(false);
+                          await logout();
+                        }}
+                        className="w-full text-left rounded-lg px-3 py-2 text-xs font-semibold uppercase tracking-wider text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
+                      >
+                        Đăng xuất
+                      </button>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <Link href="/login">
+                  <Button variant="ghost" size="icon" className="rounded-full cursor-pointer">
+                    <UserRound className="h-5 w-5" />
+                  </Button>
+                </Link>
+              )}
+            </div>
             <Button
               variant="ghost"
               size="icon"

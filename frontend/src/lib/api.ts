@@ -24,6 +24,9 @@ export type ApiProduct = {
   discount?: number | null
   image: string
   isNew: boolean
+  sku?: string
+  stock?: number
+  description?: string
 }
 
 export type ApiPost = {
@@ -125,6 +128,50 @@ export async function getJobs(): Promise<ApiJob[]> {
 export async function getStores(): Promise<ApiStore[]> {
   const data = await fetchApi<{ data: ApiStore[] }>("/stores")
   return data.data
+}
+
+// Authentication Helpers
+export async function apiLogin(credentials: Record<string, string>) {
+  const url = getApiUrl("/login")
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "Accept": "application/json" },
+    body: JSON.stringify(credentials)
+  })
+  return { ok: res.ok, status: res.status, data: await res.json() }
+}
+
+export async function apiRegister(userData: Record<string, string>) {
+  const url = getApiUrl("/register")
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "Accept": "application/json" },
+    body: JSON.stringify(userData)
+  })
+  return { ok: res.ok, status: res.status, data: await res.json() }
+}
+
+export async function apiGetMe(token: string) {
+  const url = getApiUrl("/me")
+  const res = await fetch(url, {
+    headers: {
+      "Authorization": `Bearer ${token}`,
+      "Accept": "application/json"
+    }
+  })
+  return { ok: res.ok, status: res.status, data: await res.json() }
+}
+
+export async function apiLogout(token: string) {
+  const url = getApiUrl("/logout")
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${token}`,
+      "Accept": "application/json"
+    }
+  })
+  return { ok: res.ok, status: res.status }
 }
 
 export { getApiUrl }

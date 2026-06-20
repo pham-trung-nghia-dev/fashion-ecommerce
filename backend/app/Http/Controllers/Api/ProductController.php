@@ -70,6 +70,9 @@ class ProductController extends Controller
             'price' => (string) $p->price,
             'oldPrice' => $p->old_price ? (string) $p->old_price : null,
             'discount' => $p->discount,
+            'sku' => $p->sku ?? '',
+            'stock' => (int) $p->stock,
+            'description' => $p->description ?? '',
             'image' => $imageUrl,
             'isNew' => (bool) $p->is_new,
         ];

@@ -10,7 +10,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { CartContext } from "@/src/context/cartContext"
+import { useCart } from "@/src/context/cartContext"
 import { showMessage } from "@/src/utils/notification"
 import { getProduct, getProducts } from "@/src/lib/api"
 import type { ApiProduct } from "@/src/lib/api"
@@ -25,7 +25,7 @@ const ProductDetail = () => {
   const [quantity, setQuantity] = useState(1)
   const [product, setProduct] = useState<ApiProduct | null>(null)
   const [relatedProducts, setRelatedProducts] = useState<ApiProduct[]>([])
-  const { cart, setCart } = useContext(CartContext)
+  const { addToCart } = useCart()
 
   useEffect(() => {
     let cancelled = false
@@ -65,14 +65,7 @@ const ProductDetail = () => {
   }
 
   const handleAddToCart = () => {
-    const item = { ...product, quantity }
-    const existingItem = cart.find((item: any) => item.id === product.id)
-    if (existingItem) {
-      setCart(cart.map((i: any) => (i.id === product.id ? { ...i, quantity: i.quantity + quantity } : i)))
-    } else {
-      setCart([...cart, item])
-    }
-    showMessage.success(`Đã thêm ${product.name} vào giỏ hàng thành công!`)
+    addToCart(product, quantity)
   }
 
   return (
@@ -140,8 +133,7 @@ const ProductDetail = () => {
           </div>
 
           <p className="max-w-[460px] text-[13px] leading-relaxed text-slate-700">
-            Mẫu áo polo với phom dáng trẻ trung, chất liệu thoáng mát, dễ phối cùng quần jeans hoặc
-            quần kaki cho nhiều dịp khác nhau.
+            {product.subTitle || "Mẫu áo với phom dáng trẻ trung, chất liệu thoáng mát, dễ phối cùng quần jeans hoặc quần kaki cho nhiều dịp khác nhau."}
           </p>
 
           {/* Size Selection */}
@@ -192,9 +184,9 @@ const ProductDetail = () => {
 
           {/* Meta Info */}
           <div className="space-y-3 text-[#9F9F9F]">
-            <div className="flex gap-4"><span className="w-20">SKU</span><span>: SS001</span></div>
-            <div className="flex gap-4"><span className="w-20">Category</span><span>: Sofas</span></div>
-            <div className="flex gap-4"><span className="w-20">Tags</span><span>: Sofa, Chair, Home, Shop</span></div>
+            <div className="flex gap-4"><span className="w-20">SKU</span><span>: {product.sku || "SS001"}</span></div>
+            <div className="flex gap-4"><span className="w-20">Category</span><span>: Thời trang</span></div>
+            <div className="flex gap-4"><span className="w-20">Tags</span><span>: Modern, Stylist, Shop</span></div>
           </div>
         </div>
       </div>
@@ -218,11 +210,10 @@ const ProductDetail = () => {
           </TabsList>
           <TabsContent
             value="desc"
-            className="mx-auto max-w-[1026px] space-y-6 text-center text-sm text-slate-600"
+            className="mx-auto max-w-[1026px] space-y-6 text-center text-sm text-slate-600 animate-fade-in"
           >
-            <p>
-              Thiết kế đơn giản, dễ mặc hằng ngày. Chất liệu co giãn nhẹ giúp vận động thoải mái,
-              phù hợp đi làm, đi chơi, gặp gỡ bạn bè.
+            <p className="whitespace-pre-line text-slate-700 leading-relaxed text-left max-w-2xl mx-auto">
+              {product.description || "Thiết kế đơn giản, dễ mặc hằng ngày. Chất liệu co giãn nhẹ giúp vận động thoải mái, phù hợp đi làm, đi chơi, gặp gỡ bạn bè."}
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div className="relative h-[260px] overflow-hidden rounded-lg bg-[#F9F1E7]">
@@ -235,10 +226,11 @@ const ProductDetail = () => {
           </TabsContent>
           <TabsContent
             value="info"
-            className="mx-auto max-w-[800px] space-y-3 text-sm text-slate-600"
+            className="mx-auto max-w-[800px] space-y-3 text-sm text-slate-600 text-left"
           >
-            <p>Chất liệu: cotton thoáng mát, ít nhăn.</p>
-            <p>Hướng dẫn bảo quản: giặt máy chế độ nhẹ, không sử dụng chất tẩy mạnh.</p>
+            <p><strong>Chất liệu:</strong> Cotton thoáng mát, co giãn và giữ phom dáng tốt.</p>
+            <p><strong>Hướng dẫn bảo quản:</strong> Giặt máy ở nhiệt độ thường, chế độ giặt nhẹ, tránh chất tẩy rửa mạnh, phơi trong bóng râm để giữ màu sản phẩm lâu bền.</p>
+            {product.stock != null && <p><strong>Tình trạng hàng hóa:</strong> {product.stock > 0 ? `Còn hàng (Còn lại ${product.stock} sản phẩm)` : 'Tạm hết hàng'}</p>}
           </TabsContent>
         </Tabs>
       </div>
