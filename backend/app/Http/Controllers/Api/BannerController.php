@@ -19,7 +19,7 @@ class BannerController extends Controller
         return response()->json([
             'data' => $banners->map(fn (Banner $b) => [
                 'id' => $b->id,
-                'image' => $b->image ? Storage::disk('public')->url($b->image) : '',
+                'image' => $b->image ? (str_starts_with($b->image, 'http') || str_starts_with($b->image, 'data:') ? $b->image : Storage::disk('public')->url($b->image)) : '',
             ]),
         ]);
     }
