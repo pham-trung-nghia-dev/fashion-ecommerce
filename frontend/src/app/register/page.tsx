@@ -1,20 +1,46 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
 import { useAuth } from '@/src/context/authContext';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { UserPlus, Mail, Lock, User, ArrowRight, Sparkles } from 'lucide-react';
-import toast from 'react-hot-toast';
+import { Mail, Lock, User, ArrowRight, Sparkles } from 'lucide-react';
+
+const registerSchema = z
+  .object({
+    name: z.string().min(2, 'Họ và tên tối thiểu 2 ký tự'),
+    email: z.string().email('Địa chỉ email không hợp lệ'),
+    password: z.string().min(6, 'Mật khẩu phải có ít nhất 6 ký tự'),
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: 'Mật khẩu xác nhận không khớp',
+    path: ['confirmPassword'],
+  });
+
+type RegisterFormValues = z.infer<typeof registerSchema>;
 
 export default function RegisterPage() {
-  const { register, user, isLoading } = useAuth();
+  const { register: registerAuth, user, isLoading } = useAuth();
   const router = useRouter();
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<RegisterFormValues>({
+    resolver: zodResolver(registerSchema),
+    defaultValues: {
+      name: '',
+      email: '',
+      password: '',
+      confirmPassword: '',
+    },
+  });
 
   // If already logged in, redirect to home
   useEffect(() => {
@@ -23,22 +49,8 @@ export default function RegisterPage() {
     }
   }, [user, router]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!name || !email || !password || !confirmPassword) {
-      toast.error('Vui lòng điền đầy đủ thông tin.');
-      return;
-    }
-    if (password !== confirmPassword) {
-      toast.error('Mật khẩu nhập lại không khớp.');
-      return;
-    }
-    if (password.length < 6) {
-      toast.error('Mật khẩu phải có ít nhất 6 ký tự.');
-      return;
-    }
-
-    const success = await register(name, email, password);
+  const onSubmit = async (data: RegisterFormValues) => {
+    const success = await registerAuth(data.name, data.email, data.password);
     if (success) {
       router.push('/home');
     }
@@ -50,10 +62,15 @@ export default function RegisterPage() {
         {/* Left Side: Visual Showcase */}
         <div className="hidden md:flex md:col-span-5 bg-zinc-900 text-white p-12 flex-col justify-between relative overflow-hidden">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_left,rgba(120,119,198,0.2),transparent)]" />
-          <div className="absolute inset-0 bg-cover bg-center opacity-40 mix-blend-overlay" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1483985988355-763728e1935b?q=80&w=800')" }} />
-          
+          <div
+            className="absolute inset-0 bg-cover bg-center opacity-40 mix-blend-overlay"
+            style={{
+              backgroundImage: "url('https://images.unsplash.com/photo-1483985988355-763728e1935b?q=80&w=800')",
+            }}
+          />
+
           <div className="relative z-10">
-            <Link href="/home" className="flex items-center space-x-2 text-xl font-bold tracking-widest uppercase">
+            <Link href="/" className="flex items-center space-x-2 text-xl font-bold tracking-widest uppercase">
               <Sparkles className="h-6 w-6 text-yellow-400" />
               <span>FASHION</span>
             </Link>
@@ -61,14 +78,15 @@ export default function RegisterPage() {
 
           <div className="relative z-10 space-y-6">
             <h2 className="text-4xl font-light leading-tight">
-              Bắt đầu <br />
+              Gia Nhập <br />
               <span className="font-bold text-transparent bg-clip-text bg-gradient-to-r from-amber-200 to-yellow-500">
-                Hành Trình
-              </span> <br />
+                Cộng Đồng
+              </span>{' '}
+              <br />
               Thời Trang.
             </h2>
             <p className="text-zinc-400 text-sm leading-relaxed">
-              Tạo tài khoản ngay hôm nay để mở khóa những đặc quyền thành viên, tích lũy điểm thưởng và nhận các ưu đãi giảm giá độc quyền.
+              Tạo tài khoản để nhận voucher giảm 10% cho đơn hàng đầu tiên cùng vô vàn ưu đãi thành viên độc quyền.
             </p>
           </div>
 
@@ -88,12 +106,12 @@ export default function RegisterPage() {
             <div className="space-y-2">
               <h1 className="text-3xl font-bold text-zinc-900">Đăng Ký Tài Khoản</h1>
               <p className="text-zinc-500 text-sm">
-                Điền thông tin bên dưới để tạo tài khoản mới của bạn.
+                Điền thông tin của bạn để trở thành thành viên của FASHION.
               </p>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-1">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+              <div className="space-y-1.5">
                 <label className="text-xs font-semibold uppercase tracking-wider text-zinc-600 block">
                   Họ và tên
                 </label>
@@ -103,16 +121,17 @@ export default function RegisterPage() {
                   </span>
                   <input
                     type="text"
-                    required
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2.5 border border-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:border-transparent transition-all text-zinc-950 placeholder-zinc-400 bg-zinc-50/50"
+                    {...register('name')}
+                    className={`w-full pl-10 pr-4 py-2.5 border rounded-xl focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:border-transparent transition-all text-zinc-950 placeholder-zinc-400 bg-zinc-50/50 text-xs md:text-sm ${
+                      errors.name ? 'border-rose-500 bg-rose-50/20' : 'border-zinc-200'
+                    }`}
                     placeholder="Nguyễn Văn A"
                   />
                 </div>
+                {errors.name && <p className="text-xs text-rose-500">{errors.name.message}</p>}
               </div>
 
-              <div className="space-y-1">
+              <div className="space-y-1.5">
                 <label className="text-xs font-semibold uppercase tracking-wider text-zinc-600 block">
                   Địa chỉ Email
                 </label>
@@ -122,16 +141,17 @@ export default function RegisterPage() {
                   </span>
                   <input
                     type="email"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2.5 border border-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:border-transparent transition-all text-zinc-950 placeholder-zinc-400 bg-zinc-50/50"
+                    {...register('email')}
+                    className={`w-full pl-10 pr-4 py-2.5 border rounded-xl focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:border-transparent transition-all text-zinc-950 placeholder-zinc-400 bg-zinc-50/50 text-xs md:text-sm ${
+                      errors.email ? 'border-rose-500 bg-rose-50/20' : 'border-zinc-200'
+                    }`}
                     placeholder="name@example.com"
                   />
                 </div>
+                {errors.email && <p className="text-xs text-rose-500">{errors.email.message}</p>}
               </div>
 
-              <div className="space-y-1">
+              <div className="space-y-1.5">
                 <label className="text-xs font-semibold uppercase tracking-wider text-zinc-600 block">
                   Mật khẩu
                 </label>
@@ -141,16 +161,17 @@ export default function RegisterPage() {
                   </span>
                   <input
                     type="password"
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2.5 border border-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:border-transparent transition-all text-zinc-950 placeholder-zinc-400 bg-zinc-50/50"
-                    placeholder="••••••••"
+                    {...register('password')}
+                    className={`w-full pl-10 pr-4 py-2.5 border rounded-xl focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:border-transparent transition-all text-zinc-950 placeholder-zinc-400 bg-zinc-50/50 text-xs md:text-sm ${
+                      errors.password ? 'border-rose-500 bg-rose-50/20' : 'border-zinc-200'
+                    }`}
+                    placeholder="Tối thiểu 6 ký tự"
                   />
                 </div>
+                {errors.password && <p className="text-xs text-rose-500">{errors.password.message}</p>}
               </div>
 
-              <div className="space-y-1">
+              <div className="space-y-1.5">
                 <label className="text-xs font-semibold uppercase tracking-wider text-zinc-600 block">
                   Xác nhận mật khẩu
                 </label>
@@ -160,41 +181,38 @@ export default function RegisterPage() {
                   </span>
                   <input
                     type="password"
-                    required
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2.5 border border-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:border-transparent transition-all text-zinc-950 placeholder-zinc-400 bg-zinc-50/50"
-                    placeholder="••••••••"
+                    {...register('confirmPassword')}
+                    className={`w-full pl-10 pr-4 py-2.5 border rounded-xl focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:border-transparent transition-all text-zinc-950 placeholder-zinc-400 bg-zinc-50/50 text-xs md:text-sm ${
+                      errors.confirmPassword ? 'border-rose-500 bg-rose-50/20' : 'border-zinc-200'
+                    }`}
+                    placeholder="Nhập lại mật khẩu"
                   />
                 </div>
+                {errors.confirmPassword && (
+                  <p className="text-xs text-rose-500">{errors.confirmPassword.message}</p>
+                )}
               </div>
 
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full mt-4 py-3 px-4 bg-zinc-900 text-white rounded-xl font-medium hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center space-x-2 shadow-lg shadow-zinc-900/10 cursor-pointer"
+                className="w-full mt-2 py-3.5 px-4 bg-zinc-900 text-white rounded-xl font-medium hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center space-x-2 shadow-lg shadow-zinc-900/10 cursor-pointer"
               >
                 {isLoading ? (
                   <span className="inline-block h-5 w-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                 ) : (
                   <>
-                    <span>Đăng Ký</span>
+                    <span>Đăng Ký Thành Viên</span>
                     <ArrowRight className="h-4 w-4" />
                   </>
                 )}
               </button>
             </form>
 
-            <div className="relative flex py-1 items-center">
-              <div className="flex-grow border-t border-zinc-200"></div>
-              <span className="flex-shrink mx-4 text-zinc-400 text-xs uppercase tracking-wider">Hoặc</span>
-              <div className="flex-grow border-t border-zinc-200"></div>
-            </div>
-
             <p className="text-center text-sm text-zinc-600">
               Đã có tài khoản?{' '}
               <Link href="/login" className="font-semibold text-zinc-900 hover:underline">
-                Đăng nhập
+                Đăng nhập ngay
               </Link>
             </p>
           </motion.div>

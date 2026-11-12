@@ -11,24 +11,17 @@ use App\Models\Promotion;
 use App\Models\Store;
 use App\Models\User;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
     /**
-     * Seed the application's database.
+     * Seed the application's database with frontend mock data.
      */
     public function run(): void
     {
-        // 1. Tạo tài khoản mẫu
-        User::updateOrCreate(
-            ['email' => 'test@example.com'],
-            [
-                'name' => 'Khách hàng thử nghiệm',
-                'password' => Hash::make('password'),
-            ]
-        );
-
+        // 1. Tài khoản admin & khách hàng mẫu
         User::updateOrCreate(
             ['email' => 'admin@gmail.com'],
             [
@@ -37,7 +30,15 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
-        // 2. Tạo danh mục sản phẩm
+        User::updateOrCreate(
+            ['email' => 'test@example.com'],
+            [
+                'name' => 'Khách hàng thử nghiệm',
+                'password' => Hash::make('password'),
+            ]
+        );
+
+        // 2. Danh mục sản phẩm
         $catMen = Category::updateOrCreate(
             ['id' => 1],
             ['name' => 'Đồ Nam', 'slug' => 'do-nam', 'sort_order' => 1]
@@ -53,185 +54,222 @@ class DatabaseSeeder extends Seeder
             ['name' => 'HOT', 'slug' => 'hot', 'sort_order' => 3]
         );
 
-        // 3. Tạo banner quảng cáo trang chủ
+        $catTops = Category::updateOrCreate(
+            ['id' => 4],
+            ['name' => 'Tops', 'slug' => 'tops', 'sort_order' => 4]
+        );
+
+        $catBottoms = Category::updateOrCreate(
+            ['id' => 5],
+            ['name' => 'Bottoms', 'slug' => 'bottoms', 'sort_order' => 5]
+        );
+
+        $catOuterwear = Category::updateOrCreate(
+            ['id' => 6],
+            ['name' => 'Outerwear', 'slug' => 'outerwear', 'sort_order' => 6]
+        );
+
+        // 3. Banner quảng cáo khớp với frontend (HeroSection mock slides)
         Banner::truncate();
         Banner::create([
-            'image' => 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1600&auto=format&fit=crop&q=80',
+            'image' => '/hero-slide-1.png',
             'sort_order' => 1,
             'is_active' => true,
         ]);
         Banner::create([
-            'image' => 'https://images.unsplash.com/photo-1479064555552-3ef4979f8908?w=1600&auto=format&fit=crop&q=80',
+            'image' => '/hero-slide-2.png',
             'sort_order' => 2,
             'is_active' => true,
         ]);
         Banner::create([
-            'image' => 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=1600&auto=format&fit=crop&q=80',
+            'image' => '/hero-slide-3.png',
             'sort_order' => 3,
             'is_active' => true,
         ]);
 
-        // 4. Tạo sản phẩm thời trang mẫu
+        // 4. Lấy dữ liệu mock từ frontend/src/data/data.json
+        DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+        DB::table('category_product')->truncate();
         Product::truncate();
-        
-        $p1 = Product::create([
-            'id' => 1,
-            'name' => 'Syltherine Tee',
-            'sub_title' => 'Áo thun nam dáng rộng tối giản',
-            'sku' => 'TS-SYL-01',
-            'price' => 350000,
-            'old_price' => 500000,
-            'discount' => 30,
-            'stock' => 100,
-            'description' => 'Áo thun nam dáng rộng phong cách basic, chất liệu 100% cotton co giãn 4 chiều mềm mịn, thấm hút mồ hôi cực tốt thích hợp cho mùa hè năng động.',
-            'image' => 'https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?w=600&auto=format&fit=crop&q=80',
-            'primary_category_id' => 1,
-            'is_active' => true,
-            'is_new' => false,
-        ]);
+        DB::statement('SET FOREIGN_KEY_CHECKS=1;');
 
-        $p2 = Product::create([
-            'id' => 2,
-            'name' => 'Leviosa Shirt',
-            'sub_title' => 'Sơ mi nữ đũi tay phồng nhẹ nhàng',
-            'sku' => 'SH-LEV-02',
-            'price' => 450000,
-            'old_price' => null,
-            'discount' => null,
-            'stock' => 50,
-            'description' => 'Áo sơ mi nữ chất liệu đũi tự nhiên mát lạnh, tay phồng nhẹ thanh lịch thích hợp cho các nàng diện đi làm, đi chơi hay đi cafe dạo phố.',
-            'image' => 'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=600&auto=format&fit=crop&q=80',
-            'primary_category_id' => 2,
-            'is_active' => true,
-            'is_new' => true,
-        ]);
+        $frontendJsonPath = base_path('../frontend/src/data/data.json');
+        if (file_exists($frontendJsonPath)) {
+            $jsonContent = json_decode(file_get_contents($frontendJsonPath), true);
+            $mockProducts = $jsonContent['products'] ?? [];
 
-        $p3 = Product::create([
-            'id' => 3,
-            'name' => 'Lolito Denim Jacket',
-            'sub_title' => 'Áo khoác denim nam vintage bụi bặm',
-            'sku' => 'JK-LOL-03',
-            'price' => 750000,
-            'old_price' => 990000,
-            'discount' => 24,
-            'stock' => 40,
-            'description' => 'Áo khoác bò denim nam phong cách retro vintage, đường may chắc chắn kết hợp hiệu ứng wash bụi bặm, thể hiện cá tính mạnh mẽ cho người mặc.',
-            'image' => 'https://images.unsplash.com/photo-1542272604-787c3835535d?w=600&auto=format&fit=crop&q=80',
-            'primary_category_id' => 1,
-            'is_active' => true,
-            'is_new' => false,
-        ]);
+            foreach ($mockProducts as $index => $item) {
+                // Parse giá "2.500.000" -> 2500000
+                $cleanPrice = (float) preg_replace('/[^\d]/', '', (string) ($item['price'] ?? '0'));
+                $cleanOldPrice = !empty($item['oldPrice'])
+                    ? (float) preg_replace('/[^\d]/', '', (string) $item['oldPrice'])
+                    : null;
 
-        $p4 = Product::create([
-            'id' => 4,
-            'name' => 'Respira Dress',
-            'sub_title' => 'Đầm hoa nhí tay loe dịu dàng',
-            'sku' => 'DR-RES-04',
-            'price' => 590000,
-            'old_price' => null,
-            'discount' => null,
-            'stock' => 30,
-            'description' => 'Chiếc váy đầm hoa nhí điệu đà với thiết kế bo chun eo tôn dáng, chất voan hàn mềm rủ bay bổng giúp bạn thu hút mọi ánh nhìn trong những buổi hẹn hò.',
-            'image' => 'https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=600&auto=format&fit=crop&q=80',
-            'primary_category_id' => 2,
-            'is_active' => true,
-            'is_new' => true,
-        ]);
+                $primaryCatId = ($item['id'] % 2 === 1) ? 1 : 2; // Xen kẽ Đồ Nam (1), Đồ Nữ (2)
 
-        $p5 = Product::create([
-            'id' => 5,
-            'name' => 'Urban Street Hoodie',
-            'sub_title' => 'Áo nỉ hoodie nam nữ Unisex',
-            'sku' => 'HD-URB-05',
-            'price' => 520000,
-            'old_price' => 650000,
-            'discount' => 20,
-            'stock' => 120,
-            'description' => 'Áo nỉ hoodie unisex mũ rộng dày dặn, chất nỉ bông cao cấp ấm áp thích hợp cho cả nam và nữ theo đuổi phong cách thời trang đường phố trẻ trung.',
-            'image' => 'https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=600&auto=format&fit=crop&q=80',
-            'primary_category_id' => 1,
-            'is_active' => true,
-            'is_new' => false,
-        ]);
+                $prod = Product::create([
+                    'id' => (int) $item['id'],
+                    'name' => $item['name'] ?? ('Product ' . $item['id']),
+                    'sub_title' => $item['subTitle'] ?? 'Stylish cafe chair',
+                    'sku' => 'MOCK-' . str_pad((string) $item['id'], 3, '0', STR_PAD_LEFT),
+                    'price' => $cleanPrice,
+                    'old_price' => $cleanOldPrice,
+                    'discount' => isset($item['discount']) ? (int) $item['discount'] : null,
+                    'stock' => 100,
+                    'description' => 'Sản phẩm ' . ($item['name'] ?? '') . ' cao cấp từ BST Fashion E-commerce.',
+                    'image' => $item['image'] ?? null,
+                    'primary_category_id' => $primaryCatId,
+                    'is_active' => true,
+                    'is_new' => !empty($item['isNew']),
+                ]);
 
-        $p6 = Product::create([
-            'id' => 6,
-            'name' => 'Pinky Woolen Coat',
-            'sub_title' => 'Áo khoác dạ dáng dài thu đông sang trọng',
-            'sku' => 'CT-PIN-06',
-            'price' => 1250000,
-            'old_price' => null,
-            'discount' => null,
-            'stock' => 25,
-            'description' => 'Áo khoác dạ dáng dài thu đông chất dạ lông cừu ép siêu ấm áp, phom đứng thanh lịch và sang trọng, là điểm nhấn hoàn hảo cho tủ đồ đông của các quý cô.',
-            'image' => 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=600&auto=format&fit=crop&q=80',
-            'primary_category_id' => 2,
-            'is_active' => true,
-            'is_new' => true,
-        ]);
+                // Gán danh mục: HOT (3) và Đồ Nam / Nữ
+                $syncCats = [$primaryCatId];
+                if ($prod->is_new || ($prod->discount && $prod->discount > 0)) {
+                    $syncCats[] = 3; // HOT
+                }
+                $prod->categories()->sync($syncCats);
+            }
+        }
 
-        $p7 = Product::create([
-            'id' => 7,
-            'name' => 'Cargo Pants Tactical',
-            'sub_title' => 'Quần túi hộp nam năng động',
-            'sku' => 'PA-CAR-07',
-            'price' => 480000,
-            'old_price' => 600000,
-            'discount' => 20,
-            'stock' => 75,
-            'description' => 'Quần kaki túi hộp nam phom rộng trẻ trung, chất vải kaki thô bền màu, chịu lực tốt kết hợp nhiều túi tiện dụng thoải mái hoạt động thể thao hay dã ngoại.',
-            'image' => 'https://images.unsplash.com/photo-1517423568366-8b83523034fd?w=600&auto=format&fit=crop&q=80',
-            'primary_category_id' => 1,
-            'is_active' => true,
-            'is_new' => false,
-        ]);
+        // Bổ sung thêm các sản phẩm thời trang mẫu để danh sách đầy đặn cho shop
+        $extraProducts = [
+            [
+                'id' => 5,
+                'name' => 'Lolito Denim Jacket',
+                'sub_title' => 'Áo khoác denim nam vintage bụi bặm',
+                'sku' => 'JK-LOL-05',
+                'price' => 750000,
+                'old_price' => 990000,
+                'discount' => 24,
+                'stock' => 40,
+                'description' => 'Áo khoác bò denim nam phong cách retro vintage, đường may chắc chắn kết hợp hiệu ứng wash bụi bặm.',
+                'image' => 'https://images.unsplash.com/photo-1542272604-787c3835535d?w=600&auto=format&fit=crop&q=80',
+                'primary_category_id' => 1,
+                'is_active' => true,
+                'is_new' => false,
+                'categories' => [1, 3, 6],
+            ],
+            [
+                'id' => 6,
+                'name' => 'Respira Floral Dress',
+                'sub_title' => 'Đầm hoa nhí tay loe dịu dàng',
+                'sku' => 'DR-RES-06',
+                'price' => 590000,
+                'old_price' => null,
+                'discount' => null,
+                'stock' => 30,
+                'description' => 'Chiếc váy đầm hoa nhí điệu đà với thiết kế bo chun eo tôn dáng, chất voan hàn mềm rủ bay bổng.',
+                'image' => 'https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=600&auto=format&fit=crop&q=80',
+                'primary_category_id' => 2,
+                'is_active' => true,
+                'is_new' => true,
+                'categories' => [2, 3],
+            ],
+            [
+                'id' => 7,
+                'name' => 'Urban Street Hoodie',
+                'sub_title' => 'Áo nỉ hoodie nam nữ Unisex',
+                'sku' => 'HD-URB-07',
+                'price' => 520000,
+                'old_price' => 650000,
+                'discount' => 20,
+                'stock' => 120,
+                'description' => 'Áo nỉ hoodie unisex mũ rộng dày dặn, chất nỉ bông cao cấp ấm áp.',
+                'image' => 'https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=600&auto=format&fit=crop&q=80',
+                'primary_category_id' => 1,
+                'is_active' => true,
+                'is_new' => false,
+                'categories' => [1, 3, 4],
+            ],
+            [
+                'id' => 8,
+                'name' => 'Pinky Woolen Coat',
+                'sub_title' => 'Áo khoác dạ dáng dài thu đông',
+                'sku' => 'CT-PIN-08',
+                'price' => 1250000,
+                'old_price' => null,
+                'discount' => null,
+                'stock' => 25,
+                'description' => 'Áo khoác dạ dáng dài thu đông chất dạ lông cừu ép siêu ấm áp, phom đứng thanh lịch và sang trọng.',
+                'image' => 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=600&auto=format&fit=crop&q=80',
+                'primary_category_id' => 2,
+                'is_active' => true,
+                'is_new' => true,
+                'categories' => [2, 6],
+            ],
+            [
+                'id' => 9,
+                'name' => 'Cargo Tactical Pants',
+                'sub_title' => 'Quần túi hộp nam năng động',
+                'sku' => 'PA-CAR-09',
+                'price' => 480000,
+                'old_price' => 600000,
+                'discount' => 20,
+                'stock' => 75,
+                'description' => 'Quần kaki túi hộp nam phom rộng trẻ trung, chất vải kaki thô bền màu, chịu lực tốt.',
+                'image' => 'https://images.unsplash.com/photo-1517423568366-8b83523034fd?w=600&auto=format&fit=crop&q=80',
+                'primary_category_id' => 1,
+                'is_active' => true,
+                'is_new' => false,
+                'categories' => [1, 5],
+            ],
+            [
+                'id' => 10,
+                'name' => 'Summer Pleated Skirt',
+                'sub_title' => 'Chân váy xếp ly dáng chữ A',
+                'sku' => 'SK-SUM-10',
+                'price' => 290000,
+                'old_price' => null,
+                'discount' => null,
+                'stock' => 90,
+                'description' => 'Chân váy xếp ly dáng ngắn chữ A năng động, cạp cao tôn eo kèm quần bảo hộ bên trong.',
+                'image' => 'https://images.unsplash.com/photo-1583496661160-fb5886a0aaaa?w=600&auto=format&fit=crop&q=80',
+                'primary_category_id' => 2,
+                'is_active' => true,
+                'is_new' => true,
+                'categories' => [2, 5],
+            ],
+        ];
 
-        $p8 = Product::create([
-            'id' => 8,
-            'name' => 'Summer Pleated Skirt',
-            'sub_title' => 'Chân váy xếp ly dáng chữ A',
-            'sku' => 'SK-SUM-08',
-            'price' => 290000,
-            'old_price' => null,
-            'discount' => null,
-            'stock' => 90,
-            'description' => 'Chân váy xếp ly dáng ngắn chữ A năng động, cạp cao tôn eo kèm quần bảo hộ bên trong, dễ dàng phối cùng áo thun hay sơ mi đi học đi chơi năng động.',
-            'image' => 'https://images.unsplash.com/photo-1583496661160-fb5886a0aaaa?w=600&auto=format&fit=crop&q=80',
-            'primary_category_id' => 2,
-            'is_active' => true,
-            'is_new' => true,
-        ]);
+        foreach ($extraProducts as $extra) {
+            $catIds = $extra['categories'];
+            unset($extra['categories']);
+            $prod = Product::create($extra);
+            $prod->categories()->sync($catIds);
+        }
 
-        // Liên kết sản phẩm HOT vào bảng pivot category_product
-        $p1->categories()->sync([1, 3]); // Syltherine (Đồ Nam, HOT)
-        $p3->categories()->sync([1, 3]); // Lolito Denim Jacket (Đồ Nam, HOT)
-        $p5->categories()->sync([1, 3]); // Urban Street Hoodie (Đồ Nam, HOT)
-        $p2->categories()->sync([2]);    // Leviosa Shirt (Đồ Nữ)
-        $p4->categories()->sync([2]);    // Respira Dress (Đồ Nữ)
-        $p6->categories()->sync([2, 3]); // Pinky Woolen Coat (Đồ Nữ, HOT)
-        $p7->categories()->sync([1]);    // Cargo Pants
-        $p8->categories()->sync([2]);    // Summer Skirt
-
-        // 5. Tạo tin tức bài viết mẫu
+        // 5. Bài viết / Tin tức mẫu (Khớp với mockNews trong frontend NewsSection)
         Post::truncate();
         Post::create([
-            'title' => 'Xu hướng thời trang Streetwear thống trị mùa hè 2026',
-            'excerpt' => 'Khám phá các phong cách thời trang đường phố đang được giới trẻ vô cùng ưa chuộng và săn đón trong mùa hè năm nay.',
-            'content' => '<p>Thời trang Streetwear luôn có sức hút kỳ lạ với giới trẻ nhờ sự năng động, phá cách và tự do thể hiện cá tính. Mùa hè năm 2026 chứng kiến sự lên ngôi của các mẫu áo thun oversized cực đại, quần túi hộp tactical bụi bặm và các gam màu trung tính kết hợp điểm nhấn neon độc đáo.</p><p>Chất liệu cotton tự nhiên, đũi mát lạnh hay các dòng vải tái chế thân thiện với môi trường cũng đang trở thành sự lựa chọn hàng đầu của các tín đồ thời trang.</p>',
-            'thumbnail' => 'https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=600&auto=format&fit=crop&q=80',
+            'id' => 1,
+            'title' => 'Thử thách "MÙA YÊU" – 100% nhận quà',
+            'excerpt' => 'Lòa loa loa! KẾT QUẢ VÒNG 1 đã có với rất nhiều bài dự thi đầy sáng tạo, cảm xúc...',
+            'content' => '<p>Lòa loa loa! KẾT QUẢ VÒNG 1 đã có với rất nhiều bài dự thi đầy sáng tạo, cảm xúc. Chương trình "Thử thách MÙA YÊU" nhằm lan tỏa năng lượng tích cực, khuyến khích khách hàng chia sẻ khoảnh khắc cùng trang phục yêu thích. Khi tham gia, bạn chỉ cần chụp hình outfit cùng chúng tôi, đăng tải lên mạng xã hội kèm hashtag chương trình và tag fanpage để nhận ngay quà tặng.</p><p>Ngoài ra, khách hàng còn có cơ hội nhận thêm voucher mua sắm và quà tặng đặc biệt khi đến trực tiếp hệ thống cửa hàng trong thời gian diễn ra chương trình.</p>',
+            'thumbnail' => '/shop-banner.png',
             'status' => true,
-            'published_at' => now(),
+            'published_at' => now()->subDays(2),
         ]);
         Post::create([
-            'title' => 'Bí quyết phối đồ sơ mi phong cách Minimalism thanh lịch',
-            'excerpt' => 'Sự đơn giản tạo nên đỉnh cao của phong cách. Cùng UrbanWear bỏ túi 5 cách phối đồ sơ mi thanh lịch cho cả tuần tự tin.',
-            'content' => '<p>Phong cách tối giản Minimalism không bao giờ lỗi mốt. Chỉ với một chiếc sơ mi đũi phom rộng màu trắng hoặc pastel, bạn có thể biến hóa linh hoạt từ thanh lịch nơi công sở đến nhẹ nhàng khi hẹn hò cuối tuần.</p><p>Kết hợp cùng quần tây ống suông cạp cao hoặc chân váy chữ A xếp ly nhẹ nhàng sẽ giúp bạn ghi điểm tuyệt đối trong mắt đồng nghiệp và bạn bè.</p>',
-            'thumbnail' => 'https://images.unsplash.com/photo-1485968579580-b6d095142e6e?w=600&auto=format&fit=crop&q=80',
+            'id' => 2,
+            'title' => 'Đón Xuân sang – Lên đồ Tết | Ưu đãi tới 50%',
+            'excerpt' => 'Ưu đãi tới 50% cho hàng trăm sản phẩm trong BST Xuân – Hè tại toàn bộ hệ thống cửa hàng...',
+            'content' => '<p>Chào đón mùa Xuân với chương trình ưu đãi lớn nhất năm: giảm giá lên tới 50% cho hàng trăm sản phẩm thuộc BST Xuân – Hè. Các thiết kế áo thun, sơ mi, quần jeans, kaki đều được cập nhật phom dáng mới, màu sắc tươi sáng, dễ phối đồ.</p><p>Ưu đãi áp dụng tại toàn bộ hệ thống cửa hàng và kênh online trong thời gian giới hạn. Đừng bỏ lỡ cơ hội làm mới tủ đồ với mức giá cực kỳ hấp dẫn.</p>',
+            'thumbnail' => '/hero-bg.jpg',
             'status' => true,
             'published_at' => now()->subDay(),
         ]);
+        Post::create([
+            'id' => 3,
+            'title' => 'Không khí năm mới, nhận lì xì cực hấp dẫn',
+            'excerpt' => 'Check-in tại cửa hàng, tham gia minigame nhận lì xì đầu năm với nhiều phần quà bất ngờ...',
+            'content' => '<p>Không khí năm mới rộn ràng với chương trình lì xì đầu năm dành cho mọi khách ghé cửa hàng. Chỉ cần check-in tại cửa hàng, tham gia minigame đơn giản, bạn đã có thể nhận ngay phong bao lì xì may mắn cùng nhiều phần quà dễ thương.</p><p>Bên cạnh đó, các combo mua sắm đầu năm cũng được áp dụng với mức giá ưu đãi, giúp bạn dễ dàng chọn lựa outfit phù hợp cho công việc và những buổi gặp mặt đầu xuân.</p>',
+            'thumbnail' => '/shop-banner.png',
+            'status' => true,
+            'published_at' => now(),
+        ]);
 
-        // 6. Tạo chương trình khuyến mãi mẫu
+        // 6. Chương trình khuyến mãi mẫu
         Promotion::truncate();
         Promotion::create([
             'title' => 'MỪNG KHAI TRƯƠNG - SIÊU ƯU ĐÃI HÈ 2026',
@@ -248,7 +286,7 @@ class DatabaseSeeder extends Seeder
             'is_active' => true,
         ]);
 
-        // 7. Tạo tuyển dụng mẫu
+        // 7. Tuyển dụng mẫu
         Job::truncate();
         Job::create([
             'title' => 'Nhân viên Tư vấn Thời trang (Showroom HN)',
@@ -263,16 +301,16 @@ class DatabaseSeeder extends Seeder
             'is_active' => true,
         ]);
 
-        // 8. Tạo hệ thống cửa hàng
+        // 8. Hệ thống cửa hàng
         Store::truncate();
         Store::create([
-            'name' => 'UrbanWear Showroom Hà Nội',
+            'name' => 'Fashion Boutique Hà Nội',
             'address' => '123 Phố Huế, Phường Ngô Thì Nhậm, Quận Hai Bà Trưng, Hà Nội',
             'phone' => '0987 654 321',
             'sort_order' => 1,
         ]);
         Store::create([
-            'name' => 'UrbanWear Showroom Sài Gòn',
+            'name' => 'Fashion Boutique Sài Gòn',
             'address' => '456 Nguyễn Trãi, Phường Bến Thành, Quận 1, TP. Hồ Chí Minh',
             'phone' => '0912 345 678',
             'sort_order' => 2,

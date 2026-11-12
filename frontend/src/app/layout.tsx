@@ -6,8 +6,8 @@ import Footer from "../components/footer";
 import { CartProvider } from "../context/cartContext";
 import { AuthProvider } from "../context/authContext";
 import { Toaster } from "react-hot-toast";
-import CartPopup from "../components/cart";
-
+import CartDrawer from "../components/cart/CartDrawer";
+import QueryProvider from "../providers/QueryProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -32,17 +32,32 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased selection:bg-slate-900 selection:text-white`}
       >
-        <AuthProvider>
-          <CartProvider>
-            <Header />
-            {children}
-            <CartPopup />
-            <Footer />
-            <Toaster position="top-right" reverseOrder={false} />
-          </CartProvider>
-        </AuthProvider>
+        <QueryProvider>
+          <AuthProvider>
+            <CartProvider>
+              <Header />
+              {children}
+              <CartDrawer />
+              <Footer />
+              <Toaster
+                position="top-right"
+                toastOptions={{
+                  duration: 3000,
+                  style: {
+                    background: "#0f172a",
+                    color: "#f8fafc",
+                    fontSize: "13px",
+                    fontWeight: 500,
+                    borderRadius: "12px",
+                    boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.2)",
+                  },
+                }}
+              />
+            </CartProvider>
+          </AuthProvider>
+        </QueryProvider>
       </body>
     </html>
   );
