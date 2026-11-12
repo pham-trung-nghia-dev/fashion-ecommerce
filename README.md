@@ -207,8 +207,3 @@ fashion-ecommerce
    ```
 
 ---
-
-## 📌 Điểm Nhấn Kiến Trúc Dành Cho Phỏng Vấn (CV Highlights)
-* **Separation of Concerns:** Phân tách rõ ràng giữa Data Fetching (Axios Interceptors + Service Layer), Server State (TanStack Query), Client State (Zustand persist) và Presentation Components.
-* **Performance:** Tận dụng Turbopack, ISR/SSR của Next.js 16, lazy loading ảnh và optimistic UI update trên giỏ hàng.
-* **Security & Reliability:** Bảo vệ route API bằng Bearer Token, làm sạch dữ liệu đầu vào với Zod, kiểm soát lỗi tập trung tránh crash ứng dụng.
