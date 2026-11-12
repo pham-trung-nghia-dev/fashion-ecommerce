@@ -4,10 +4,10 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Services\JwtService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
 
 class AuthController extends Controller
 {
@@ -23,12 +23,15 @@ class AuthController extends Controller
             'name' => $validated['name'],
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
-            'api_token' => Str::random(60),
         ]);
+
+        // Tạo JWT Token
+        $jwtToken = JwtService::generateToken($user);
 
         return response()->json([
             'message' => 'Đăng ký tài khoản thành công!',
-            'token' => $user->api_token,
+            'token_type' => 'Bearer',
+            'token' => $jwtToken,
             'user' => [
                 'id' => $user->id,
                 'name' => $user->name,
@@ -52,13 +55,13 @@ class AuthController extends Controller
             ], 401);
         }
 
-        // Generate a new token on each login for security
-        $user->api_token = Str::random(60);
-        $user->save();
+        // Tạo JWT Token chuẩn
+        $jwtToken = JwtService::generateToken($user);
 
         return response()->json([
             'message' => 'Đăng nhập thành công!',
-            'token' => $user->api_token,
+            'token_type' => 'Bearer',
+            'token' => $jwtToken,
             'user' => [
                 'id' => $user->id,
                 'name' => $user->name,
@@ -82,14 +85,8 @@ class AuthController extends Controller
 
     public function logout(Request $request): JsonResponse
     {
-        $user = auth()->user();
-        
-        if ($user) {
-            // Nullify token
-            $user->api_token = null;
-            $user->save();
-        }
-
+        // Với JWT stateless, client chỉ cần dọn token ở browser.
+        // Backend trả về phản hồi thành công sạch sẽ 200 OK.
         return response()->json([
             'message' => 'Đăng xuất thành công!',
         ]);
