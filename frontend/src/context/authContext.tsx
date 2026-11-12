@@ -26,25 +26,27 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Initialize and load token/user from localStorage
+  // Khởi tạo phiên đăng nhập từ LocalStorage
   useEffect(() => {
     const initializeAuth = async () => {
-      const storedToken = localStorage.getItem('auth_token');
+      const storedToken = localStorage.getItem('token') || localStorage.getItem('auth_token');
       if (storedToken) {
         setToken(storedToken);
+        localStorage.setItem('token', storedToken);
+
         try {
           const res = await apiGetMe(storedToken);
-
-          if (res.ok) {
+          if (res.ok && res.data?.user) {
             setUser(res.data.user);
           } else {
-            // Token is invalid/expired
+            localStorage.removeItem('token');
             localStorage.removeItem('auth_token');
+            localStorage.removeItem('fashion_auth');
             setToken(null);
             setUser(null);
           }
-        } catch (error) {
-          console.error('Failed to fetch user profile:', error);
+        } catch {
+          // Token không hợp lệ hoặc hết hạn
         }
       }
       setIsLoading(false);
@@ -58,18 +60,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       const res = await apiLogin({ email, password });
 
-      if (res.ok) {
-        localStorage.setItem('auth_token', res.data.token);
-        setToken(res.data.token);
+      if (res.ok && res.data?.token) {
+        const jwtToken = res.data.token;
+        localStorage.setItem('token', jwtToken);
+        localStorage.setItem('auth_token', jwtToken);
+        setToken(jwtToken);
         setUser(res.data.user);
         toast.success(res.data.message || 'Đăng nhập thành công!');
         return true;
       } else {
-        toast.error(res.data.message || 'Đăng nhập thất bại.');
+        toast.error(res.data?.message || 'Đăng nhập thất bại.');
         return false;
       }
-    } catch (error) {
-      console.error('Login error:', error);
+    } catch {
       toast.error('Đã xảy ra lỗi kết nối mạng.');
       return false;
     } finally {
@@ -82,18 +85,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       const res = await apiRegister({ name, email, password });
 
-      if (res.ok) {
-        localStorage.setItem('auth_token', res.data.token);
-        setToken(res.data.token);
+      if (res.ok && res.data?.token) {
+        const jwtToken = res.data.token;
+        localStorage.setItem('token', jwtToken);
+        localStorage.setItem('auth_token', jwtToken);
+        setToken(jwtToken);
         setUser(res.data.user);
         toast.success(res.data.message || 'Đăng ký tài khoản thành công!');
         return true;
       } else {
-        toast.error(res.data.message || 'Đăng ký thất bại.');
+        toast.error(res.data?.message || 'Đăng ký thất bại.');
         return false;
       }
-    } catch (error) {
-      console.error('Register error:', error);
+    } catch {
       toast.error('Đã xảy ra lỗi kết nối mạng.');
       return false;
     } finally {
@@ -105,12 +109,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setIsLoading(true);
     try {
       if (token) {
-        await apiLogout(token);
+        await apiLogout(token).catch(() => {});
       }
-    } catch (error) {
-      console.error('Logout error:', error);
     } finally {
+      localStorage.removeItem('token');
       localStorage.removeItem('auth_token');
+      localStorage.removeItem('fashion_auth');
       setToken(null);
       setUser(null);
       toast.success('Đăng xuất thành công!');

@@ -2,7 +2,7 @@
 
 namespace App\Http\Middleware;
 
-use App\Models\User;
+use App\Services\JwtService;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -10,7 +10,7 @@ use Symfony\Component\HttpFoundation\Response;
 class AuthenticateApi
 {
     /**
-     * Handle an incoming request.
+     * Handle an incoming request with JWT validation.
      *
      * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
      */
@@ -22,13 +22,14 @@ class AuthenticateApi
             return response()->json(['message' => 'Unauthorized. Token missing.'], 401);
         }
 
-        $user = User::where('api_token', $token)->first();
+        // Xác thực bằng JSON Web Token (JWT)
+        $user = JwtService::getUserFromToken($token);
 
         if (!$user) {
-            return response()->json(['message' => 'Unauthorized. Invalid token.'], 401);
+            return response()->json(['message' => 'Unauthorized. Invalid or expired token.'], 401);
         }
 
-        // Set the authenticated user into the Laravel auth system
+        // Gán user đã xác thực vào Auth context của Laravel
         auth()->setUser($user);
 
         return $next($request);

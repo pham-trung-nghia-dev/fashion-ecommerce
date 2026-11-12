@@ -19,7 +19,7 @@ Dự án website **Thương Mại Điện Tử Thời Trang Hiện Đại (Fashi
 ### 2. Backend & Admin Dashboard (Laravel 12 REST API)
 * **Framework:** Laravel 12.x.
 * **Admin Dashboard:** **FilamentPHP v3** (Quản trị sản phẩm, danh mục, bài viết, banner, khuyến mãi, hệ thống cửa hàng).
-* **Authentication:** API Token Authentication (`api_token` Bearer Token).
+* **Authentication:** **JWT (JSON Web Token - HS256)** sử dụng thư viện `firebase/php-jwt`, payload mã hóa thông tin người dùng kèm thời gian hết hạn (`exp`), giải mã và xác thực tự động qua Middleware `AuthenticateApi`.
 * **Database:** MySQL 8.x / MariaDB.
 * **Thanh toán:** Tích hợp phương thức COD & Cổng thanh toán trực tuyến PayOS (VietQR).
 
