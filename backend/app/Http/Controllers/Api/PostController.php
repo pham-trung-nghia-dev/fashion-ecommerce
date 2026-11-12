@@ -36,7 +36,7 @@ class PostController extends Controller
     {
         $imageUrl = '';
         if ($p->thumbnail) {
-            if (str_starts_with($p->thumbnail, 'http') || str_starts_with($p->thumbnail, 'data:')) {
+            if (str_starts_with($p->thumbnail, 'http') || str_starts_with($p->thumbnail, 'data:') || str_starts_with($p->thumbnail, '/')) {
                 $imageUrl = $p->thumbnail;
             } else {
                 $imageUrl = asset('storage/'.$p->thumbnail);

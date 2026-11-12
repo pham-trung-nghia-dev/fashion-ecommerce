@@ -1,27 +1,26 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useCart } from '@/src/context/cartContext';
+import { useCartStore } from '@/src/store/useCartStore';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Trash2, Plus, Minus, ShoppingBag, ArrowRight, Ticket } from 'lucide-react';
+import { Trash2, Plus, Minus, ShoppingBag, ArrowRight, Ticket, ArrowLeft, ShieldCheck } from 'lucide-react';
 import { formatPriceVND } from '@/src/utils/format';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 
 export default function CartPage() {
-  const { cart, updateQuantity, removeFromCart } = useCart();
+  const { items: cart, updateQuantity, removeItem, getSubtotal } = useCartStore();
   const [couponCode, setCouponCode] = useState('');
   const [discountPercent, setDiscountPercent] = useState(0);
   const [appliedCoupon, setAppliedCoupon] = useState('');
 
-  const subtotal = cart.reduce((total, item) => total + Number(item.price) * item.quantity, 0);
-  
+  const subtotal = getSubtotal();
+
   const handleApplyCoupon = (e: React.FormEvent) => {
     e.preventDefault();
     if (!couponCode) return;
-    
-    // Simple mock coupons
+
     const code = couponCode.trim().toUpperCase();
     if (code === 'FASHIONNEW') {
       setDiscountPercent(10);
@@ -44,31 +43,31 @@ export default function CartPage() {
   };
 
   const discountAmount = (subtotal * discountPercent) / 100;
-  const shippingFee = subtotal > 1000000 || subtotal === 0 ? 0 : 30000; // Free shipping over 1M
+  const shippingFee = subtotal > 500000 || subtotal === 0 ? 0 : 30000;
   const total = subtotal - discountAmount + shippingFee;
 
   if (cart.length === 0) {
     return (
       <div className="min-h-[60vh] bg-slate-50 flex items-center justify-center py-16 px-4">
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="max-w-md w-full bg-white rounded-3xl p-8 shadow-md text-center space-y-6"
+          className="max-w-md w-full bg-white rounded-3xl p-8 shadow-sm text-center space-y-6"
         >
-          <div className="w-20 h-20 bg-zinc-50 rounded-full flex items-center justify-center mx-auto">
-            <ShoppingBag className="h-10 w-10 text-zinc-400" />
+          <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mx-auto text-slate-400">
+            <ShoppingBag className="h-10 w-10" />
           </div>
           <div className="space-y-2">
-            <h1 className="text-2xl font-bold text-zinc-900">Giỏ hàng của bạn đang trống</h1>
-            <p className="text-zinc-500 text-sm">
-              Có vẻ như bạn chưa chọn được sản phẩm ưng ý. Hãy ghé cửa hàng để lựa chọn nhé!
+            <h2 className="text-xl font-bold text-slate-800">Giỏ hàng của bạn đang trống</h2>
+            <p className="text-xs text-slate-500">
+              Có vẻ bạn chưa thêm sản phẩm nào. Hãy khám phá ngay các thiết kế mới nhất của chúng tôi nhé!
             </p>
           </div>
-          <Link 
+          <Link
             href="/products"
-            className="inline-flex w-full py-3.5 bg-zinc-900 text-white rounded-xl font-medium hover:bg-zinc-800 transition-all items-center justify-center space-x-2 shadow-lg shadow-zinc-900/10"
+            className="inline-flex items-center gap-2 px-8 py-3.5 bg-slate-900 text-white text-xs font-semibold uppercase tracking-wider rounded-xl hover:bg-slate-800 transition"
           >
-            <span>Quay lại cửa hàng</span>
+            Mua sắm ngay
             <ArrowRight className="h-4 w-4" />
           </Link>
         </motion.div>
@@ -77,186 +76,163 @@ export default function CartPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 py-10 md:py-16">
-      <div className="container mx-auto px-4 md:px-14">
-        {/* Breadcrumb */}
-        <nav className="mb-8 text-sm text-zinc-500">
-          <Link href="/home" className="hover:text-zinc-950 transition-colors">Trang chủ</Link>
-          <span className="mx-2">&gt;</span>
-          <span className="text-zinc-950 font-medium">Giỏ hàng</span>
-        </nav>
+    <div className="min-h-screen bg-slate-50/50 py-12">
+      <div className="max-w-6xl mx-auto px-4">
+        <div className="mb-6 flex items-center justify-between">
+          <Link
+            href="/products"
+            className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-slate-500 hover:text-slate-800 transition"
+          >
+            <ArrowLeft className="h-4 w-4" /> Tiếp tục chọn đồ
+          </Link>
+          <span className="text-xs text-slate-500 font-medium">
+            Có <strong>{cart.length}</strong> sản phẩm trong giỏ
+          </span>
+        </div>
 
-        <h1 className="text-3xl font-bold text-zinc-950 mb-10 tracking-tight">Giỏ Hàng Của Bạn</h1>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          {/* Cột danh sách món hàng */}
+          <div className="lg:col-span-8 space-y-4">
+            <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-sm">
+              <h1 className="text-base font-bold uppercase tracking-wider text-slate-900 mb-4 pb-3 border-b border-slate-100">
+                Chi tiết giỏ hàng
+              </h1>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          {/* List items */}
-          <div className="lg:col-span-8 bg-white rounded-3xl p-6 md:p-8 shadow-sm space-y-6">
-            <h2 className="text-lg font-bold text-zinc-900 pb-4 border-b border-zinc-100">
-              Sản phẩm ({cart.length})
-            </h2>
-
-            <div className="divide-y divide-zinc-100">
-              <AnimatePresence initial={false}>
-                {cart.map((item) => (
-                  <motion.div 
-                    key={item.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, x: -100 }}
-                    transition={{ duration: 0.2 }}
-                    className="py-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 first:pt-0 last:pb-0 group"
-                  >
-                    {/* Img + Title */}
-                    <div className="flex items-center gap-4 flex-1">
-                      <div className="w-20 h-20 bg-zinc-50 border border-zinc-100 rounded-2xl overflow-hidden relative flex-shrink-0">
-                        <Image src={item.image} alt={item.name} fill unoptimized className="object-cover group-hover:scale-105 transition-transform duration-300" />
+              <div className="divide-y divide-slate-100">
+                <AnimatePresence initial={false}>
+                  {cart.map((item) => (
+                    <motion.div
+                      key={item.id}
+                      layout
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="py-4 flex gap-4 items-center"
+                    >
+                      <div className="relative h-24 w-20 rounded-xl overflow-hidden bg-slate-100 shrink-0 border">
+                        <Image
+                          src={item.image || '/shop-banner.png'}
+                          alt={item.name}
+                          fill
+                          unoptimized
+                          className="object-cover"
+                        />
                       </div>
-                      <div className="space-y-1 min-w-0">
-                        <Link href={`/shop/${item.id}`} className="font-semibold text-zinc-900 hover:text-zinc-600 transition-colors text-sm md:text-base block truncate">
+
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-xs md:text-sm font-semibold text-slate-900 truncate">
                           {item.name}
-                        </Link>
-                        {item.subTitle && (
-                          <p className="text-xs text-zinc-400 truncate">{item.subTitle}</p>
-                        )}
-                        <p className="text-sm font-semibold text-zinc-800 sm:hidden">
-                          ₫ {formatPriceVND(item.price)}
+                        </h3>
+                        <p className="text-[11px] text-slate-500 mt-1">
+                          Size: <span className="font-medium text-slate-700">{item.size}</span> | Màu: <span className="font-medium text-slate-700">{item.color}</span>
+                        </p>
+                        <p className="text-xs md:text-sm font-bold text-rose-600 mt-2">
+                          {formatPriceVND(item.price)}₫
                         </p>
                       </div>
-                    </div>
 
-                    {/* Quantity controls & Price info */}
-                    <div className="flex items-center justify-between sm:justify-end gap-6 w-full sm:w-auto">
-                      <div className="flex items-center rounded-xl border border-zinc-200 px-3 py-1.5">
-                        <button 
-                          onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                          className="text-zinc-500 hover:text-zinc-950 p-1 cursor-pointer"
+                      {/* Bộ điều khiển số lượng */}
+                      <div className="flex items-center rounded-full border border-slate-200 bg-slate-50">
+                        <button
+                          onClick={() => updateQuantity(item.id, -1)}
+                          className="flex h-7 w-7 items-center justify-center text-slate-600 hover:text-black transition"
                         >
-                          <Minus size={14} />
+                          <Minus className="h-3 w-3" />
                         </button>
-                        <span className="w-8 text-center font-semibold text-sm text-zinc-900">{item.quantity}</span>
-                        <button 
-                          onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                          className="text-zinc-500 hover:text-zinc-950 p-1 cursor-pointer"
+                        <span className="w-8 text-center text-xs font-semibold text-slate-800">
+                          {item.quantity}
+                        </span>
+                        <button
+                          onClick={() => updateQuantity(item.id, 1)}
+                          className="flex h-7 w-7 items-center justify-center text-slate-600 hover:text-black transition"
                         >
-                          <Plus size={14} />
+                          <Plus className="h-3 w-3" />
                         </button>
                       </div>
 
-                      <div className="text-right hidden sm:block min-w-[100px]">
-                        <p className="text-sm font-semibold text-zinc-900">
-                          ₫ {formatPriceVND(item.price)}
-                        </p>
-                        {item.quantity > 1 && (
-                          <p className="text-xs text-zinc-400 mt-0.5">
-                            Tổng: ₫ {formatPriceVND(Number(item.price) * item.quantity)}
-                          </p>
-                        )}
-                      </div>
-
-                      <button 
-                        onClick={() => removeFromCart(item.id)}
-                        className="text-zinc-400 hover:text-red-600 transition-colors p-2 rounded-xl hover:bg-zinc-50 cursor-pointer"
-                        title="Xóa khỏi giỏ hàng"
+                      {/* Nút Xoá */}
+                      <button
+                        onClick={() => removeItem(item.id)}
+                        className="p-2 text-slate-400 hover:text-rose-600 transition"
+                        title="Xoá khỏi giỏ"
                       >
-                        <Trash2 size={16} />
+                        <Trash2 className="h-4 w-4" />
                       </button>
-                    </div>
-                  </motion.div>
-                ))}
-              </AnimatePresence>
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+              </div>
             </div>
           </div>
 
-          {/* Cart totals summary */}
+          {/* Cột tóm tắt & Coupon */}
           <div className="lg:col-span-4 space-y-6">
-            {/* Coupon widget */}
-            <div className="bg-white rounded-3xl p-6 shadow-sm">
-              <h3 className="text-sm font-bold uppercase tracking-wider text-zinc-800 mb-4 flex items-center gap-2">
-                <Ticket className="h-4 w-4 text-zinc-600" />
-                <span>Mã giảm giá</span>
-              </h3>
-              
-              {appliedCoupon ? (
-                <div className="bg-emerald-50 text-emerald-800 p-4 rounded-2xl flex items-center justify-between text-xs font-semibold">
-                  <div>
-                    <span className="font-bold">{appliedCoupon}</span>
-                    <span className="ml-2 font-normal text-emerald-600">(-{discountPercent}%)</span>
-                  </div>
-                  <button 
-                    onClick={removeCoupon} 
-                    className="text-emerald-800 hover:underline uppercase tracking-wider font-bold cursor-pointer"
-                  >
-                    Hủy
-                  </button>
-                </div>
-              ) : (
+            <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-sm space-y-4">
+              <h2 className="text-sm font-bold uppercase tracking-wider text-slate-800 border-b border-slate-100 pb-3">
+                Tổng thanh toán
+              </h2>
+
+              {/* Nhập mã giảm giá */}
+              <div>
                 <form onSubmit={handleApplyCoupon} className="flex gap-2">
-                  <input
-                    type="text"
-                    value={couponCode}
-                    onChange={(e) => setCouponCode(e.target.value)}
-                    placeholder="Mã: FASHIONNEW, SUMMERSALE"
-                    className="flex-1 px-4 py-2.5 text-sm border border-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:border-transparent transition-all placeholder-zinc-400 text-zinc-900"
-                  />
-                  <button 
+                  <div className="relative flex-1">
+                    <input
+                      type="text"
+                      value={couponCode}
+                      onChange={(e) => setCouponCode(e.target.value)}
+                      placeholder="Mã: FASHIONNEW (-10%)"
+                      className="w-full text-xs rounded-xl border border-slate-200 p-2.5 pl-8 outline-none uppercase font-semibold focus:border-slate-800"
+                    />
+                    <Ticket className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                  </div>
+                  <button
                     type="submit"
-                    className="bg-zinc-900 text-white text-xs font-semibold px-4 py-2.5 rounded-xl hover:bg-zinc-800 transition-colors cursor-pointer"
+                    className="px-4 py-2 bg-slate-900 text-white text-xs font-semibold uppercase tracking-wider rounded-xl hover:bg-slate-800 transition"
                   >
                     Áp dụng
                   </button>
                 </form>
-              )}
-            </div>
 
-            {/* Price details card */}
-            <div className="bg-white rounded-3xl p-6 md:p-8 shadow-sm space-y-6">
-              <h3 className="text-lg font-bold text-zinc-950">Tóm tắt đơn hàng</h3>
-
-              <div className="space-y-4 text-sm border-b border-zinc-100 pb-6">
-                <div className="flex justify-between text-zinc-600">
-                  <span>Tạm tính</span>
-                  <span className="font-semibold text-zinc-900">₫ {formatPriceVND(subtotal)}</span>
-                </div>
-                
-                {discountAmount > 0 && (
-                  <div className="flex justify-between text-emerald-600">
-                    <span>Giảm giá ({discountPercent}%)</span>
-                    <span className="font-semibold">-₫ {formatPriceVND(discountAmount)}</span>
+                {appliedCoupon && (
+                  <div className="mt-2 flex items-center justify-between bg-emerald-50 text-emerald-700 px-3 py-1.5 rounded-lg text-xs font-medium">
+                    <span>Đã dùng mã: <strong>{appliedCoupon}</strong> (-{discountPercent}%)</span>
+                    <button onClick={removeCoupon} className="text-slate-400 hover:text-slate-600 text-xs">
+                      Bỏ mã
+                    </button>
                   </div>
                 )}
+              </div>
 
-                <div className="flex justify-between text-zinc-600">
-                  <span>Phí vận chuyển</span>
-                  <span className="font-semibold text-zinc-900">
-                    {shippingFee === 0 ? 'Miễn phí' : `₫ ${formatPriceVND(shippingFee)}`}
-                  </span>
+              {/* Chi tiết tính tiền */}
+              <div className="border-t border-slate-100 pt-3 space-y-2.5 text-xs text-slate-600">
+                <div className="flex justify-between">
+                  <span>Tạm tính</span>
+                  <span className="font-semibold text-slate-800">{formatPriceVND(subtotal)}₫</span>
                 </div>
-                {shippingFee > 0 && (
-                  <p className="text-[10px] text-zinc-400">Miễn phí vận chuyển cho đơn hàng từ 1.000.000 ₫</p>
+                {discountAmount > 0 && (
+                  <div className="flex justify-between text-emerald-600 font-semibold">
+                    <span>Giảm giá</span>
+                    <span>-{formatPriceVND(discountAmount)}₫</span>
+                  </div>
                 )}
+                <div className="flex justify-between">
+                  <span>Phí giao hàng</span>
+                  <span>{shippingFee === 0 ? <strong className="text-emerald-600">Miễn phí</strong> : `${formatPriceVND(shippingFee)}₫`}</span>
+                </div>
+                <div className="flex justify-between text-sm font-bold text-slate-900 pt-3 border-t border-slate-200">
+                  <span>Tổng tiền</span>
+                  <span className="text-rose-600 text-base">{formatPriceVND(total)}₫</span>
+                </div>
               </div>
 
-              <div className="flex justify-between items-baseline">
-                <span className="text-base font-bold text-zinc-950">Tổng cộng</span>
-                <span className="text-2xl font-bold text-zinc-950">
-                  ₫ {formatPriceVND(total)}
-                </span>
-              </div>
-
-              {/* Pass the discount & shipping state via URL query to the checkout page */}
-              <Link 
+              {/* Nút chuyển trang thanh toán */}
+              <Link
                 href={`/checkout?coupon=${appliedCoupon}&discount=${discountPercent}`}
-                className="flex w-full py-4 bg-zinc-950 text-white rounded-xl font-bold uppercase tracking-wider text-xs hover:bg-zinc-800 transition-all items-center justify-center space-x-2 shadow-md shadow-zinc-900/10 cursor-pointer"
+                className="w-full py-3.5 rounded-xl bg-slate-900 hover:bg-rose-600 text-white font-bold uppercase tracking-wider text-xs shadow-lg shadow-slate-900/10 transition flex items-center justify-center gap-2"
               >
-                <span>Tiến hành thanh toán</span>
+                Tiến hành thanh toán
                 <ArrowRight className="h-4 w-4" />
               </Link>
-
-              <div className="text-center">
-                <Link href="/products" className="text-xs text-zinc-500 hover:text-zinc-900 transition-colors font-medium">
-                  Tiếp tục mua sắm
-                </Link>
-              </div>
             </div>
           </div>
         </div>

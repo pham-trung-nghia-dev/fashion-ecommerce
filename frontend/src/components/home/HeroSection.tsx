@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import Image from "next/image"
-import { getApiUrl } from "@/src/lib/api"
+import { getBanners } from "@/src/lib/api"
 
 const defaultSlides = [
   { id: 1, image: "/hero-slide-1.png" },
@@ -21,17 +21,15 @@ const HeroSection = ({ slides: propSlides }: HeroSectionProps) => {
   const [current, setCurrent] = useState(0)
 
   useEffect(() => {
-    // Thử fetch banner trực tiếp từ API ở phía client
+    // Fetch banner qua hàm API tập trung
     const fetchBanners = async () => {
       try {
-        const res = await fetch(getApiUrl("/banners"))
-        if (!res.ok) return
-        const json = (await res.json()) as { data?: { id: number; image: string }[] }
-        if (json.data && json.data.length > 0) {
-          setSlides(json.data)
+        const data = await getBanners()
+        if (data && data.length > 0) {
+          setSlides(data)
         }
       } catch {
-        // Nếu lỗi thì giữ nguyên slides hiện tại (default hoặc propSlides)
+        // Giữ slides mặc định
       }
     }
 

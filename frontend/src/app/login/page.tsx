@@ -1,17 +1,37 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
 import { useAuth } from '@/src/context/authContext';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { LogIn, Mail, Lock, ArrowRight, Sparkles } from 'lucide-react';
+import { Mail, Lock, ArrowRight, Sparkles } from 'lucide-react';
+
+const loginSchema = z.object({
+  email: z.string().email('Địa chỉ email không hợp lệ'),
+  password: z.string().min(6, 'Mật khẩu phải chứa ít nhất 6 ký tự'),
+});
+
+type LoginFormValues = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
   const { login, user, isLoading } = useAuth();
   const router = useRouter();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<LoginFormValues>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: '',
+      password: '',
+    },
+  });
 
   // If already logged in, redirect to home
   useEffect(() => {
@@ -20,10 +40,8 @@ export default function LoginPage() {
     }
   }, [user, router]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email || !password) return;
-    const success = await login(email, password);
+  const onSubmit = async (data: LoginFormValues) => {
+    const success = await login(data.email, data.password);
     if (success) {
       router.push('/home');
     }
@@ -35,10 +53,15 @@ export default function LoginPage() {
         {/* Left Side: Visual Showcase */}
         <div className="hidden md:flex md:col-span-5 bg-zinc-900 text-white p-12 flex-col justify-between relative overflow-hidden">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_left,rgba(120,119,198,0.2),transparent)]" />
-          <div className="absolute inset-0 bg-cover bg-center opacity-40 mix-blend-overlay" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=800')" }} />
-          
+          <div
+            className="absolute inset-0 bg-cover bg-center opacity-40 mix-blend-overlay"
+            style={{
+              backgroundImage: "url('https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=800')",
+            }}
+          />
+
           <div className="relative z-10">
-            <Link href="/home" className="flex items-center space-x-2 text-xl font-bold tracking-widest uppercase">
+            <Link href="/" className="flex items-center space-x-2 text-xl font-bold tracking-widest uppercase">
               <Sparkles className="h-6 w-6 text-yellow-400" />
               <span>FASHION</span>
             </Link>
@@ -49,7 +72,8 @@ export default function LoginPage() {
               Khám phá <br />
               <span className="font-bold text-transparent bg-clip-text bg-gradient-to-r from-amber-200 to-yellow-500">
                 Phong Cách
-              </span> <br />
+              </span>{' '}
+              <br />
               Của Riêng Bạn.
             </h2>
             <p className="text-zinc-400 text-sm leading-relaxed">
@@ -77,7 +101,7 @@ export default function LoginPage() {
               </p>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
               <div className="space-y-2">
                 <label className="text-xs font-semibold uppercase tracking-wider text-zinc-600 block">
                   Địa chỉ Email
@@ -88,13 +112,14 @@ export default function LoginPage() {
                   </span>
                   <input
                     type="email"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 border border-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:border-transparent transition-all text-zinc-950 placeholder-zinc-400 bg-zinc-50/50"
-                    placeholder="name@example.com"
+                    {...register('email')}
+                    className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:border-transparent transition-all text-zinc-950 placeholder-zinc-400 bg-zinc-50/50 text-xs md:text-sm ${
+                      errors.email ? 'border-rose-500 bg-rose-50/20' : 'border-zinc-200'
+                    }`}
+                    placeholder="admin@gmail.com"
                   />
                 </div>
+                {errors.email && <p className="text-xs text-rose-500">{errors.email.message}</p>}
               </div>
 
               <div className="space-y-2">
@@ -112,13 +137,14 @@ export default function LoginPage() {
                   </span>
                   <input
                     type="password"
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 border border-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:border-transparent transition-all text-zinc-950 placeholder-zinc-400 bg-zinc-50/50"
+                    {...register('password')}
+                    className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:border-transparent transition-all text-zinc-950 placeholder-zinc-400 bg-zinc-50/50 text-xs md:text-sm ${
+                      errors.password ? 'border-rose-500 bg-rose-50/20' : 'border-zinc-200'
+                    }`}
                     placeholder="••••••••"
                   />
                 </div>
+                {errors.password && <p className="text-xs text-rose-500">{errors.password.message}</p>}
               </div>
 
               <button
