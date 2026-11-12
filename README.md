@@ -1,250 +1,214 @@
-# Fashion Ecommerce Web Application
+# Fashion Ecommerce Web Application (Fullstack Enterprise Architecture)
 
-Đây là một project **website thương mại điện tử thời trang** được xây dựng theo kiến trúc **tách biệt giữa backend và frontend**.
-
-* **Backend** chịu trách nhiệm quản lý dữ liệu, xử lý logic và cung cấp API.
-* **Frontend** chịu trách nhiệm hiển thị giao diện và tương tác với người dùng.
-
-Hai phần này giao tiếp với nhau thông qua **REST API**.
+Dự án website **Thương Mại Điện Tử Thời Trang Hiện Đại (Fashion Ecommerce)** được xây dựng theo kiến trúc **Decoupled Client-Server (Tách biệt Backend & Frontend)** chuẩn doanh nghiệp, tối ưu hóa trải nghiệm người dùng (UX/UI), hiệu năng tải trang và quản lý dữ liệu an toàn.
 
 ---
 
-# Công nghệ sử dụng
+## 🛠 Công Nghệ Sử Dụng
 
-## Backend
+### 1. Frontend Architecture (Next.js 16 App Router)
+* **Framework:** Next.js 16 (App Router, Turbopack, React 19).
+* **State Management:** **Zustand** kết hợp middleware `persist` (Local Storage Sync) quản lý Cart Store, Auth Store, UI Drawer Store độc lập, hạn chế tối đa re-render không cần thiết.
+* **Server State & Caching:** **TanStack Query (React Query v5)** quản lý caching, stale-time, background refetching và đồng bộ bộ lọc sản phẩm.
+* **HTTP Client:** **Axios** tập trung với Request & Response Interceptors:
+  * Tự động đính kèm `Bearer Token` vào header mọi request.
+  * Bắt lỗi tập trung (401 tự động dọn session, 422 hiển thị toast validation, 500 server error).
+* **Form Validation:** **React Hook Form** kết hợp **Zod** schema type-safe validation (Checkout, Login, Register, regex số điện thoại Việt Nam).
+* **UI & Styling:** TailwindCSS v4, shadcn/ui components, Framer Motion (slide animations), Lucide React Icons, React Hot Toast.
 
-Backend được xây dựng bằng các công nghệ sau:
-
-* **Laravel** – Framework PHP dùng để xây dựng hệ thống backend.
-* **FilamentPHP** – Framework admin panel giúp tạo giao diện quản trị nhanh chóng.
-* **MySQL** – Hệ quản trị cơ sở dữ liệu dùng để lưu trữ dữ liệu.
-
-FilamentPHP được sử dụng để xây dựng **trang quản trị (Admin Dashboard)** cho phép quản lý nội dung của website.
-
----
-
-## Frontend
-
-Frontend được xây dựng bằng các công nghệ:
-
-* **Next.js** – Framework React dùng để xây dựng web application hiện đại.
-* **TailwindCSS** – Framework CSS giúp xây dựng giao diện nhanh và linh hoạt.
-* **shadcn/ui** – Thư viện UI component giúp xây dựng giao diện đồng bộ và dễ tái sử dụng.
-
-Frontend có nhiệm vụ hiển thị dữ liệu từ backend thông qua API.
+### 2. Backend & Admin Dashboard (Laravel 12 REST API)
+* **Framework:** Laravel 12.x.
+* **Admin Dashboard:** **FilamentPHP v3** (Quản trị sản phẩm, danh mục, bài viết, banner, khuyến mãi, hệ thống cửa hàng).
+* **Authentication:** API Token Authentication (`api_token` Bearer Token).
+* **Database:** MySQL 8.x / MariaDB.
+* **Thanh toán:** Tích hợp phương thức COD & Cổng thanh toán trực tuyến PayOS (VietQR).
 
 ---
 
-# Kiến trúc hệ thống
+## 🏛 Kiến Trúc Hệ Thống (Architecture Flow)
 
-Project được xây dựng theo kiến trúc **tách backend và frontend**.
-
-Luồng hoạt động của hệ thống:
-
-```id="archflow1"
-Admin (Filament Admin Panel)
-        │
-        ▼
-Database (MySQL)
-        │
-        ▼
-Laravel Backend API
-        │
-        ▼
-Next.js Frontend
-        │
-        ▼
-Người dùng (User)
+```text
+       Admin Panel (Filament PHP)
+                   │
+                   ▼
+       Database Chính (MySQL)
+                   ▲
+                   │ (Eloquent ORM / Migrations)
+       Laravel REST API Backend
+         (API Controllers + Auth Middleware)
+                   ▲
+                   │ HTTP / JSON (Axios Client + Interceptors)
+       Next.js 16 Frontend
+         ├── TanStack Query (Server Cache / Hooks)
+         ├── Zustand (Cart & Auth Global Store)
+         └── React Hook Form + Zod (Validation)
+                   │
+                   ▼
+             Khách Hàng (User)
 ```
 
-### Giải thích
+---
 
-* **Admin** sử dụng trang quản trị Filament để tạo và quản lý dữ liệu.
-* Dữ liệu được lưu trong **database**.
-* **Laravel Backend** cung cấp các API để truy xuất dữ liệu.
-* **Frontend Next.js** gọi các API này và hiển thị dữ liệu cho người dùng.
+## 🚀 Tính Năng Chính Nổi Bật
+
+### Phía Khách Hàng (Frontend):
+1. **Trang Chủ (Home):**
+   * Hero Banner Slider tự động chuyển động.
+   * Danh mục mua sắm nổi bật (Browse by Category).
+   * Khối sản phẩm bán chạy & Hàng mới về (New Arrivals).
+   * Khối tin tức thời trang & Lookbook.
+2. **Bộ Lọc Sản Phẩm Đa Chiều (Catalog & Filter):**
+   * Tìm kiếm realtime theo từ khóa tên sản phẩm / mô tả.
+   * Lọc theo khoảng giá (Dưới 300k, 300k - 600k, 600k - 1tr, Trên 1tr).
+   * Sắp xếp linh hoạt: Mới nhất, Giá tăng dần, Giá giảm dần, Bán chạy / Giảm giá nhiều.
+   * Tabs lọc theo Danh mục sản phẩm (Đồ Nam, Đồ Nữ, HOT, Tops, Bottoms, Outerwear).
+   * Hiệu ứng Loading Skeleton mượt mà khi lọc hoặc tải dữ liệu.
+3. **Chi Tiết Sản Phẩm (Product Detail):**
+   * Thư viện ảnh gallery với thumbnail tương tác.
+   * Chọn Size (S, M, L, XL) và Bảng màu thời trang (Color Swatches).
+   * Bộ đếm số lượng, tính toán mức giảm giá và giá gốc rõ ràng.
+   * Nút **"Thêm vào giỏ hàng"** (mở Slide Drawer tức thì) & Nút **"Mua ngay"** (chuyển thẳng checkout).
+4. **Mini Cart Drawer (Giỏ hàng trượt):**
+   * Drawer dạng slide-over từ cạnh phải với backdrop blur.
+   * Thanh tiến trình **"Mua thêm ...₫ để được FREESHIP"** kích thích giá trị đơn hàng.
+   * Tăng giảm số lượng trực tiếp trong drawer, xoá sản phẩm, tính tổng tiền realtime.
+5. **Thanh Toán (Checkout) Chuẩn Enterprise:**
+   * Form điền địa chỉ giao hàng xác thực bằng React Hook Form + Zod.
+   * Chọn phương thức thanh toán: COD (tiền mặt) hoặc Quét mã QR PayOS.
+   * Hỗ trợ áp dụng mã giảm giá (Voucher Coupon: `FASHIONNEW`, `SUMMERSALE`).
+6. **Tài Khoản & Lịch Sử Đơn Hàng:**
+   * Đăng ký, đăng nhập bảo mật với validation đầy đủ.
+   * Theo dõi trạng thái đơn hàng (Chờ xác nhận, Đang giao, Đã giao).
+
+### Phía Quản Trị Viên (Admin Filament):
+* **Products:** Quản lý sản phẩm, giá bán, giá cũ, SKU, tồn kho, ảnh đại diện, danh mục chính & phụ.
+* **Categories:** Quản lý danh mục cha/con, slug URL.
+* **Banners:** Quản lý slide banner trang chủ, thứ tự sắp xếp và kích hoạt.
+* **Posts:** Quản lý tin tức, bài viết thời trang với Rich Editor.
+* **Promotions & Stores:** Quản lý chương trình khuyến mãi và hệ thống showroom.
 
 ---
 
-# Cấu trúc project
+## 📁 Cấu Trúc Mã Nguồn (Directory Structure)
 
-```id="projectstructure1"
+```text
 fashion-ecommerce
 │
-├── backend
-│   ├── app
-│   ├── routes
-│   ├── database
-│   └── composer.json
+├── backend/                              # Laravel 12 Backend API
+│   ├── app/
+│   │   ├── Filament/Resources/           # Filament Admin Resources
+│   │   ├── Http/Controllers/Api/         # REST API Controllers (Product, Order, Auth...)
+│   │   ├── Models/                       # Eloquent Models (Product, Category, Order...)
+│   │   └── Providers/
+│   ├── database/
+│   │   ├── migrations/                   # Schema migrations
+│   │   └── seeders/DatabaseSeeder.php    # Mock data seeder đồng bộ frontend
+│   ├── routes/api.php                    # Khai báo các API routes
+│   └── .env                              # Cấu hình Database & Environment
 │
-├── frontend
-│   ├── src
-│   ├── components
+├── frontend/                             # Next.js 16 Frontend
+│   ├── src/
+│   │   ├── app/                          # App Router pages (home, products, shop, cart, checkout...)
+│   │   ├── components/
+│   │   │   ├── cart/CartDrawer.tsx       # Slide-over Mini Cart Drawer (Zustand)
+│   │   │   ├── home/                     # HeroSection, ProductGrid, NewsSection...
+│   │   │   └── layout/                   # Header, Footer
+│   │   ├── hooks/                        # Custom TanStack Query Hooks (useProducts, useCategories)
+│   │   ├── lib/
+│   │   │   ├── axios.ts                  # Axios Client instance + Interceptors
+│   │   │   └── api.ts                    # Centralized API service functions
+│   │   ├── store/                        # Zustand stores (useCartStore, useAuthStore, useUIStore)
+│   │   ├── types/                        # TypeScript Interfaces & Types
+│   │   └── utils/                        # Format VND, notification helpers
 │   └── package.json
 │
 └── README.md
 ```
 
-### Thư mục backend
+---
 
-Thư mục `backend` chứa project **Laravel** bao gồm:
+## ⚙️ Hướng Dẫn Cài Đặt & Chạy Dự Án
 
-* Models
-* API Controllers
-* Filament Resources
-* Database migrations
-* Business logic
-
-Backend có nhiệm vụ:
-
-* quản lý dữ liệu
-* cung cấp API cho frontend
+### Yêu Cầu Môi Trường
+* **PHP:** >= 8.2 (kèm PDO MySQL extension)
+* **Composer:** >= 2.x
+* **Node.js:** >= 18.x (khuyên dùng Node 20+)
+* **MySQL:** >= 8.0 (hoặc MariaDB tương đương trên WampServer / XAMPP)
 
 ---
 
-### Thư mục frontend
+### Bước 1: Khởi động Backend (Laravel API)
 
-Thư mục `frontend` chứa project **Next.js**.
+1. Di chuyển vào thư mục backend:
+   ```bash
+   cd backend
+   ```
 
-Frontend chịu trách nhiệm:
+2. Cài đặt các thư viện PHP:
+   ```bash
+   composer install
+   ```
 
-* xây dựng giao diện website
-* gọi API từ backend
-* hiển thị dữ liệu cho người dùng
+3. Cấu hình file môi trường `.env`:
+   * Đảm bảo cấu hình kết nối đúng MySQL trong file `.env`:
+     ```env
+     DB_CONNECTION=mysql
+     DB_HOST=127.0.0.1
+     DB_PORT=3306
+     DB_DATABASE=filament
+     DB_USERNAME=root
+     DB_PASSWORD=
+     ```
 
----
+4. Chạy migration tạo bảng:
+   ```bash
+   php artisan migrate
+   ```
 
-# Chức năng chính của hệ thống
+5. Nạp dữ liệu mẫu (Seeder) đồng bộ từ frontend:
+   ```bash
+   php artisan db:seed
+   ```
 
-## Admin (Filament)
+6. Khởi động Backend Server:
+   ```bash
+   php artisan serve
+   ```
+   * *API Backend sẽ chạy tại: [http://127.0.0.1:8000](http://127.0.0.1:8000)*
+   * *Trang Quản trị Admin: [http://127.0.0.1:8000/admin](http://127.0.0.1:8000/admin)*
 
-Trang quản trị cho phép quản lý:
-
-* **Products** – quản lý sản phẩm
-* **Categories** – quản lý danh mục
-* **Posts** – quản lý bài viết/tin tức
-* **Banners** – quản lý banner trang chủ
-* **Promotions** – quản lý chương trình khuyến mãi
-* **Stores** – quản lý thông tin cửa hàng
-
-Admin có thể:
-
-* tạo dữ liệu
-* chỉnh sửa dữ liệu
-* xóa dữ liệu
-* tìm kiếm và lọc dữ liệu
-
----
-
-## Người dùng (Frontend)
-
-Người dùng có thể:
-
-* xem danh sách sản phẩm
-* xem chi tiết sản phẩm
-* xem tin tức
-* xem chương trình khuyến mãi
-* xem thông tin cửa hàng
-
-Giao diện được xây dựng bằng **Next.js + TailwindCSS + shadcn/ui** để đảm bảo:
-
-* giao diện hiện đại
-* responsive
-* dễ mở rộng
+> **Tài khoản quản trị mặc định:**
+> * Email: `admin@gmail.com`
+> * Mật khẩu: `admin123`
 
 ---
 
-# API Backend
+### Bước 2: Khởi động Frontend (Next.js)
 
-Frontend giao tiếp với backend thông qua các API.
+1. Mở một cửa sổ Terminal mới và di chuyển vào thư mục frontend:
+   ```bash
+   cd frontend
+   ```
 
-Ví dụ một số API:
+2. Cài đặt các package:
+   ```bash
+   npm install
+   ```
 
-```id="apiexample1"
-GET /api/products
-GET /api/categories
-GET /api/posts
-GET /api/promotions
-GET /api/stores
-```
+3. Khởi động Development Server:
+   ```bash
+   npm run dev
+   ```
+   * *Website Frontend sẽ chạy tại: [http://localhost:3000](http://localhost:3000)*
 
-Các API này trả về dữ liệu dạng **JSON**, sau đó frontend sẽ render dữ liệu lên giao diện.
-
----
-
-# Cài đặt project
-
-## Backend
-
-Di chuyển vào thư mục backend:
-
-```id="backendinstall1"
-cd backend
-```
-
-Cài đặt dependencies:
-
-```id="backendinstall2"
-composer install
-```
-
-Chạy migration:
-
-```id="backendinstall3"
-php artisan migrate
-```
-
-Khởi chạy server Laravel:
-
-```id="backendinstall4"
-php artisan serve
-```
+4. (Tùy chọn) Kiểm tra biên dịch Production Build:
+   ```bash
+   npm run build
+   ```
 
 ---
 
-## Frontend
-
-Di chuyển vào thư mục frontend:
-
-```id="frontendinstall1"
-cd frontend
-```
-
-Cài đặt dependencies:
-
-```id="frontendinstall2"
-npm install
-```
-
-Chạy server development:
-
-```id="frontendinstall3"
-npm run dev
-```
-
----
-
-# Hướng phát triển trong tương lai
-
-Một số tính năng có thể phát triển thêm:
-
-* chức năng giỏ hàng
-* thanh toán online
-* hệ thống đăng nhập / đăng ký
-* quản lý đơn hàng
-* tìm kiếm và filter sản phẩm nâng cao
-
----
-
-# Tổng kết
-
-Project được xây dựng theo mô hình **Fullstack Web Application** với:
-
-* **Laravel + FilamentPHP** cho backend và hệ thống quản trị
-* **Next.js + shadcn/ui** cho frontend
-
-Việc tách backend và frontend giúp hệ thống:
-
-* dễ mở rộng
-* dễ bảo trì
-* có thể phát triển thêm các client khác như mobile app trong tương lai.
+## 📌 Điểm Nhấn Kiến Trúc Dành Cho Phỏng Vấn (CV Highlights)
+* **Separation of Concerns:** Phân tách rõ ràng giữa Data Fetching (Axios Interceptors + Service Layer), Server State (TanStack Query), Client State (Zustand persist) và Presentation Components.
+* **Performance:** Tận dụng Turbopack, ISR/SSR của Next.js 16, lazy loading ảnh và optimistic UI update trên giỏ hàng.
+* **Security & Reliability:** Bảo vệ route API bằng Bearer Token, làm sạch dữ liệu đầu vào với Zod, kiểm soát lỗi tập trung tránh crash ứng dụng.
